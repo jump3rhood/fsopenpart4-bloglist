@@ -21,6 +21,12 @@ test('Bloglist application returns the correct amount of blogs in the correct fo
     
     expect(response.body).toHaveLength(helper.blogs.length)
 })
+test('blogs contain a unique identifier property named id', async () => {
+  const response = await api.get('/api/blogs')
+  const blogToCheck = response.body[0]
+
+  expect(blogToCheck.id).toBeDefined()
+})
 
 test('a valid blog can be added', async () => {
   const newBlog = {
@@ -37,6 +43,7 @@ test('a valid blog can be added', async () => {
   const allBlogs = await helper.blogsInDb()
   expect(allBlogs).toHaveLength(helper.blogs.length + 1)
 })
+
 afterAll(() => {
   mongoose.connection.close()
 })
