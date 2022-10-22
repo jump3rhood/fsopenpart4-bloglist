@@ -55,9 +55,48 @@ test('a blog without likes property gets 0 as default value', async () => {
     .send(newBlog)
     .expect(201)
   const addedBlog = response.body
+
   expect(addedBlog.likes).toBe(0)
+})
+test('adding a blog without a title or url are responds with the correct status code(400)', async () => {
+  const blog = {
+    title: 'Something',
+    author: 'John Dross'
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(blog)
+    .expect(400)
+
+  const anotherBlog = {
+    author: 'John Sterling',
+    likes: 14,
+    url: 'https://www.google.com/ncr'
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(anotherBlog)
+    .expect(400)
 
 })
+
+test('deleting a blog with a given id', async () => {
+  const blogsAtStart = await helper.blogsInDb()
+
+  const blogToDelete = blogsAtStart[0]
+
+  await api
+    .delete(`/api/blogs/${blogToDelete.id}`)
+    .expect(204)
+  
+  const blogsAtEnd = await helper.blogsInDb()
+  const contents = blogsAtEnd.map(blog => blog.title)
+
+  expect(contents).not.toContain(blogToDelete.title)
+})
+
 afterAll(() => {
   mongoose.connection.close()
 })

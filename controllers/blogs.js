@@ -10,10 +10,17 @@ router.get('/', async (request, response, next) => {
 
 router.post('/', async (request, response, next) => {
   const blog = new Blog(request.body)
+  
   const savedBlog = await blog.save()
-
   if(savedBlog)
     response.status(201).json(savedBlog)
+  else
+    response.status(400).end()
 })
 
+router.delete('/:id', async (request, response) => {
+  await Blog.findByIdAndRemove(request.params.id)
+
+  response.status(204).end()
+})
 module.exports = router
