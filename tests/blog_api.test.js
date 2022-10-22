@@ -87,10 +87,10 @@ test('updating a blog', async () => {
   const blogToUpdate = blogsAtStart[0]
 
   const blog = {
-    title: "New Title",
+    title: blogToUpdate.title,
     author: blogToUpdate.author,
     url: blogToUpdate.url,
-    likes: blogToUpdate.likes
+    likes: blogToUpdate.likes + 5
   }
 
   const response = await api
@@ -101,8 +101,8 @@ test('updating a blog', async () => {
   const updatedBlog = {
     ...response.body
   }
-  delete updatedBlog.id
-  expect(updatedBlog).toEqual(blog)
+ 
+  expect(updatedBlog.likes).toBe(blogToUpdate.likes + 5)
 
   const blogsAtEnd = await helper.blogsInDb()
 
