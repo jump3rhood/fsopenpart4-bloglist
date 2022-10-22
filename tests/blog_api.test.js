@@ -81,7 +81,33 @@ test('adding a blog without a title or url are responds with the correct status 
     .expect(400)
 
 })
+test('updating a blog', async () => {
+  const blogsAtStart = await helper.blogsInDb()
+  
+  const blogToUpdate = blogsAtStart[0]
 
+  const blog = {
+    title: "New Title",
+    author: blogToUpdate.author,
+    url: blogToUpdate.url,
+    likes: blogToUpdate.likes
+  }
+
+  const response = await api
+    .put(`/api/blogs/${blogToUpdate.id}`)
+    .send(blog)
+    .expect(200)
+    .expect('Content-Type',/application\/json/)
+  const updatedBlog = {
+    ...response.body
+  }
+  delete updatedBlog.id
+  expect(updatedBlog).toEqual(blog)
+
+  const blogsAtEnd = await helper.blogsInDb()
+
+  expect(blogsAtEnd).toHaveLength(helper.blogs.length)
+})
 test('deleting a blog with a given id', async () => {
   const blogsAtStart = await helper.blogsInDb()
 
