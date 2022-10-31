@@ -1,25 +1,45 @@
 const express = require('express')
 const router = express.Router()
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 router.get('/', async (request, response, next) => {
-  const blogs = await Blog.find({})
+  const blogs = await Blog
+    .find({})
+    .populate('user', { username: 1, name: 1})
 
   response.status(200).json(blogs)
 })
 
 router.post('/', async (request, response, next) => {
-  const blog = new Blog(request.body)
+  const { title, author, url, likes} = request.body
+
+  let userId = request.body.userId
+  if(!userId){
+    const users = await User.find({})
+    userId = users[0]._id
+  } 
+  const blogObj = {
+    title,
+    author,
+    url, 
+    likes,
+    user: userId
+  }
+  const blog = new Blog(blogObj)
+  const user = await User.findById(userId)
   
   const savedBlog = await blog.save()
-  if(savedBlog)
-    response.status(201).json(savedBlog)
-  else
-    response.status(400).end()
+  user.blogs = user.blogs.concat(savedBlog._id)
+  await user.save()
+  
+  response.status(201).json(savedBlog)
 })
 
 router.get('/:id', async (request, response) => {
-  const foundBlog = await Blog.findById(request.params.id)
+  const foundBlog = await Blog
+    .findById(request.params.id)
+    .populate('user', { username: 1, name: 1})
   if(foundBlog)
     response.status(200).json(foundBlog)
   else
