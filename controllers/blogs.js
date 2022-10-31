@@ -1,5 +1,4 @@
 const express = require('express')
-const jwt = require('jsonwebtoken')
 const blogsRouter = express.Router()
 const Blog = require('../models/blog')
 const User = require('../models/user')
@@ -74,6 +73,7 @@ blogsRouter.delete('/:id', async (request, response) => {
   await Blog.findByIdAndRemove(request.params.id)
   user.blogs = user.blogs.filter(blog => blog.toString() !== request.params.id)
   await user.save()
-  response.status(200).end()
+  
+  response.status(204).end()
 })
 module.exports = blogsRouter

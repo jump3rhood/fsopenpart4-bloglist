@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const Blog = require('../models/blog')
 const User = require('../models/user')
+const jwt = require('jsonwebtoken')
 const blogs = [
   {
       _id: "5a422a851b54a676234d17f7",
@@ -60,4 +61,15 @@ const usersInDb = async () => {
   const users = await User.find({})
   return users.map(u => u.toJSON())
 }
-module.exports = {blogs, blogsInDb, usersInDb}
+const getAuthHeader = async () => {
+  const users = await User.find({})
+  const user = users[0]
+  const userForToken = {
+    username: user.username,
+    id: user.id
+  }
+  const token = jwt.sign(userForToken, process.env.SECRET)
+  const authHeader = `bearer ${token}`
+  return authHeader
+}
+module.exports = {blogs, blogsInDb, usersInDb, getAuthHeader}
