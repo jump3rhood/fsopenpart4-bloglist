@@ -1,9 +1,19 @@
 const express = require('express')
-const router = express.Router()
+const jwt = require('jsonwebtoken')
+const blogsRouter = express.Router()
 const Blog = require('../models/blog')
 const User = require('../models/user')
 
-router.get('/', async (request, response, next) => {
+
+const getTokenFrom = request => {
+  const authorization = request.get('authorization')
+  if(authorization && authorization.toLowerCase().startsWith('bearer ')){
+    return authorization.substring(7)
+  }
+  return null
+}
+
+blogsRouter.get('/', async (request, response, next) => {
   const blogs = await Blog
     .find({})
     .populate('user', { username: 1, name: 1})
@@ -11,23 +21,24 @@ router.get('/', async (request, response, next) => {
   response.status(200).json(blogs)
 })
 
-router.post('/', async (request, response, next) => {
-  const { title, author, url, likes} = request.body
+blogsRouter.post('/', async (request, response, next) => {
+  const body = request.body
+  const token = getTokenFrom(request)
+  const decodedToken = jwt.verify(token, process.env.SECRET)
+  if(!decodedToken){
+    return response.status(401).json({error: 'token missing or invalid'})
+  }
+  const user = await User.findById(decodedToken.id)
 
-  let userId = request.body.userId
-  if(!userId){
-    const users = await User.find({})
-    userId = users[0]._id
-  } 
+
   const blogObj = {
-    title,
-    author,
-    url, 
-    likes,
-    user: userId
+    title : body.title,
+    author: body.author,
+    url: body.url, 
+    likes: body.likes,
+    user: user._id
   }
   const blog = new Blog(blogObj)
-  const user = await User.findById(userId)
   
   const savedBlog = await blog.save()
   user.blogs = user.blogs.concat(savedBlog._id)
@@ -36,7 +47,7 @@ router.post('/', async (request, response, next) => {
   response.status(201).json(savedBlog)
 })
 
-router.get('/:id', async (request, response) => {
+blogsRouter.get('/:id', async (request, response) => {
   const foundBlog = await Blog
     .findById(request.params.id)
     .populate('user', { username: 1, name: 1})
@@ -46,7 +57,7 @@ router.get('/:id', async (request, response) => {
     response.status(400).end()
 })
 
-router.put('/:id', async (request, response) => {
+blogsRouter.put('/:id', async (request, response) => {
   const body = request.body 
 
   const blog = {
@@ -59,9 +70,9 @@ router.put('/:id', async (request, response) => {
   const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, {new:true})
   response.json(updatedBlog)
 })
-router.delete('/:id', async (request, response) => {
+blogsRouter.delete('/:id', async (request, response) => {
   await Blog.findByIdAndRemove(request.params.id)
 
   response.status(204).end()
 })
-module.exports = router
+module.exports = blogsRouter
