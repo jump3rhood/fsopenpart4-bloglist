@@ -63,8 +63,8 @@ blogsRouter.put('/:id', async (request, response) => {
 blogsRouter.delete('/:id', async (request, response) => {
   const decodedToken = jwt.verify(request.token, process.env.SECRET)
 
-  const blog = await Blog.findById(request.params.id).populate('user')
-  if(blog.user._id.toString() !== decodedToken.id){
+  const blog = await Blog.findById(request.params.id)
+  if(blog.user.toString() !== decodedToken.id){
     return response.status(401).end()
   }
 
