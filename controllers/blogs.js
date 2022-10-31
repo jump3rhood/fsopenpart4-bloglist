@@ -61,8 +61,14 @@ blogsRouter.put('/:id', async (request, response) => {
   response.json(updatedBlog)
 })
 blogsRouter.delete('/:id', async (request, response) => {
-  await Blog.findByIdAndRemove(request.params.id)
+  const decodedToken = jwt.verify(request.token, process.env.SECRET)
 
-  response.status(204).end()
+  const blog = await Blog.findById(request.params.id).populate('user')
+  if(blog.user._id.toString() !== decodedToken.id){
+    return response.status(401).end()
+  }
+
+  await Blog.findByIdAndRemove(request.params.id)
+  response.status(200).end()
 })
 module.exports = blogsRouter
